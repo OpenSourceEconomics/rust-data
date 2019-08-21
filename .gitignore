@@ -7,7 +7,6 @@ sim_file.pkl
 *.bbl
 *.out
 *.blg
-*.pdf
 *.toc
 *.fls
 *.fdb_latexmk
