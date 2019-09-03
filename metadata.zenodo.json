@@ -1,0 +1,25 @@
+{
+    "description": "This repository contains the raw data from Rust (1987) and data reading and processing functions.", 
+    "license": "other-open", 
+    "title": "OpenSourceEconomics/zurcher-data", 
+    "upload_type": "software", 
+    "publication_date": "1987", 
+    "creators": [
+        {
+            "name": "John Rust"
+        }
+    ], 
+    "access_right": "open", 
+    "related_identifiers": [
+        {
+            "scheme": "url", 
+            "identifier": "https://editorialexpress.com/jrust/nfxp.html", 
+            "relation": "isSupplementTo"
+        }, 
+        {
+            "scheme": "doi", 
+            "identifier": "10.5281/zenodo.3374587", 
+            "relation": "isVersionOf"
+        }
+    ]
+}
