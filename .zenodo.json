@@ -15,11 +15,6 @@
             "scheme": "url", 
             "identifier": "https://editorialexpress.com/jrust/nfxp", 
             "relation": "isSupplementTo"
-        }, 
-        {
-            "scheme": "doi", 
-            "identifier": "10.5281/zenodo.3385018", 
-            "relation": "isVersionOf"
         }
     ]
 }
