@@ -3,11 +3,10 @@ This module creates a pickle file which contains the total number of observation
 each group. Therefore every DataFrame row contains the bus identifier, the state
 variable and the according decision.
 """
-
-
-import pandas as pd
 import os
+
 import numpy as np
+import pandas as pd
 
 
 def data_processing(init_dict):
@@ -29,11 +28,11 @@ def data_processing(init_dict):
     for group in init_dict["groups"].split(","):
         df = pd.read_pickle(dirname + "/pkl/group_data/" + group + ".pkl")
         repl = pd.Series(index=df.index, data=0, dtype=int)
-        for j, i in enumerate(df.columns.values[11:]):
+        for i in df.columns.values[11:]:
             df2 = df[["Bus_ID", i]]
             df2 = df2.assign(decision=0)
             for l in [1, 2]:
-                df2.loc[repl == l, i] -= df.loc[repl == l, "Odo_" + str(l)]
+                df2.loc[repl == l, i] -= df.loc[repl == l, f"Odo_{l}"]
             for m in df2.index:
                 if i < df.columns.values[-1]:
                     # Check if the bus has a first replacement if it has occurred
