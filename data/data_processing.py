@@ -23,47 +23,57 @@ def data_processing(init_dict):
 
     """
     dirname = os.path.dirname(__file__)
-    df_end = pd.DataFrame()
     df_pool = pd.DataFrame()
     groups = init_dict["groups"]
     binsize = init_dict["binsize"]
+    idx = pd.IndexSlice
     for group in groups.split(","):
-        df = pd.read_pickle(f"{dirname}/pkl/group_data/{group}.pkl")
-        repl = pd.Series(index=df.index, data=0, dtype=int)
-        for i in df.columns.values[11:]:
-            df2 = df[["Bus_ID", i]]
-            df2 = df2.assign(decision=0)
-            for l in [1, 2]:
-                df2.loc[repl == l, i] -= df.loc[repl == l, f"Odo_{l}"]
-            for m in df2.index:
-                if i < df.columns.values[-1]:
-                    # Check if the bus has a first replacement if it has occurred
-                    if (
-                        (df.iloc[m][i + 1] > df.iloc[m]["Odo_1"])
-                        & (df.iloc[m]["Odo_1"] != 0)
-                        & (repl[m] == 0)
-                    ):
-                        df2.at[m, "decision"] = 1
-                        repl[m] = repl[m] + 1
-                    # Now check for the second
-                    elif (
-                        (df.iloc[m][i + 1] > df.iloc[m]["Odo_2"])
-                        & (df.iloc[m]["Odo_2"] != 0)
-                        & (repl[m] == 1)
-                    ):
-                        df2.at[m, "decision"] = 1
-                        repl[m] = repl[m] + 1
-            df2 = df2.rename(columns={i: "state"})
-            df_end = pd.concat([df_end, df2])
-
-        num_bus = len(df_end["Bus_ID"].unique())
-        num_periods = df_end.shape[0] / num_bus
-        df_end["period"] = np.arange(num_periods).repeat(num_bus).astype(int)
-        df_end[["state"]] = (df_end[["state"]] / binsize).astype(int)
-        df_end.sort_values(["Bus_ID", "period"], inplace=True)
-        df_end.reset_index(drop=True, inplace=True)
-        df_pool = pd.concat([df_pool, df_end], axis=0)
-    df_pool.reset_index(drop=True, inplace=True)
+        df_raw = pd.read_pickle(f"{dirname}/pkl/group_data/{group}.pkl")
+        num_periods = df_raw.shape[1] - 12
+        bus_index = df_raw["Bus_ID"].unique().astype(int)
+        period_index = np.arange(num_periods)
+        index = pd.MultiIndex.from_product([bus_index, period_index])
+        df = pd.DataFrame(index=index, columns=["state", "mileage", "usage"])
+        df = df.assign(decision=0)
+        for i, index in enumerate(df_raw.index):
+            bus_row = df_raw.loc[index][11:].reset_index(drop=True)
+            repl_2 = df_raw.loc[index, "Odo_2"]
+            repl_1 = df_raw.loc[index, "Odo_1"]
+            replacement_decisions = []
+            if repl_1 > 0:
+                replacement_decisions += [np.max(bus_row[bus_row < repl_1].index)]
+                if repl_2 > 0:
+                    bus_row[(repl_1 < bus_row) & (bus_row < repl_2)] -= repl_1
+                    replacement_decisions += [np.max(bus_row[bus_row < repl_2].index)]
+                    bus_row[bus_row > repl_2] -= repl_2
+                else:
+                    bus_row[repl_1 < bus_row] -= repl_1
+            bus_milage = bus_row.values
+            bus_states = (bus_milage / binsize).astype(int)
+            usage = np.empty(0)
+            if len(replacement_decisions) > 0:
+                for decision_period in replacement_decisions:
+                    df.loc[idx[bus_index[i], decision_period], "decision"] = 1
+                for j, rep in enumerate(replacement_decisions):
+                    if j > 0:
+                        start = replacement_decisions[j - 1] + 1
+                    else:
+                        start = 0
+                    usage = np.append(
+                        usage, bus_states[start + 1 : rep + 1] - bus_states[start:rep]
+                    )
+                    usage = np.append(usage, np.ceil(bus_milage[rep + 1] / binsize))
+                usage = np.append(
+                    usage,
+                    bus_states[replacement_decisions[-1] + 2 :]
+                    - bus_states[replacement_decisions[-1] + 1 : -1],
+                )
+            else:
+                usage = bus_states[1:] - bus_states[:-1]
+            df.loc[bus_index[i], "usage"] = usage
+            df.loc[bus_index[i], "state"] = bus_states[:-1]
+            df.loc[bus_index[i], "mileage"] = bus_milage[-1]
+        df_pool = pd.concat([df_pool, df], axis=0)
     os.makedirs(dirname + "/pkl/replication_data", exist_ok=True)
     df_pool.to_pickle(f"{dirname}/pkl/replication_data/rep_{groups}_{binsize}.pkl")
     return df_pool
