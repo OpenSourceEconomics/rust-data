@@ -37,17 +37,20 @@ def data_processing(init_dict):
         df = df.assign(decision=0)
         for i, index in enumerate(df_raw.index):
             bus_row = df_raw.loc[index][11:].reset_index(drop=True)
-            repl_2 = df_raw.loc[index, "Odo_2"]
-            repl_1 = df_raw.loc[index, "Odo_1"]
+            repl_mil = [df_raw.loc[index, "Odo_1"], df_raw.loc[index, "Odo_2"]]
             replacement_decisions = []
-            if repl_1 > 0:
-                replacement_decisions += [np.max(bus_row[bus_row < repl_1].index)]
-                if repl_2 > 0:
-                    bus_row[(repl_1 < bus_row) & (bus_row < repl_2)] -= repl_1
-                    replacement_decisions += [np.max(bus_row[bus_row < repl_2].index)]
-                    bus_row[bus_row > repl_2] -= repl_2
+            if repl_mil[0] > 0:
+                replacement_decisions += [np.max(bus_row[bus_row < repl_mil[0]].index)]
+                if repl_mil[1] > 0:
+                    bus_row[
+                        (repl_mil[0] < bus_row) & (bus_row < repl_mil[1])
+                    ] -= repl_mil[0]
+                    replacement_decisions += [
+                        np.max(bus_row[bus_row < repl_mil[1]].index)
+                    ]
+                    bus_row[bus_row > repl_mil[1]] -= repl_mil[1]
                 else:
-                    bus_row[repl_1 < bus_row] -= repl_1
+                    bus_row[repl_mil[0] < bus_row] -= repl_mil[0]
             bus_milage = bus_row.values
             bus_states = (bus_milage / binsize).astype(int)
             usage = np.empty(0)
@@ -62,7 +65,7 @@ def data_processing(init_dict):
                     usage = np.append(
                         usage, bus_states[start + 1 : rep + 1] - bus_states[start:rep]
                     )
-                    usage = np.append(usage, np.ceil(bus_milage[rep + 1] / binsize))
+                    usage = np.append(usage, np.ceil((bus_milage[rep + 1]) / binsize))
                 usage = np.append(
                     usage,
                     bus_states[replacement_decisions[-1] + 2 :]
@@ -72,7 +75,7 @@ def data_processing(init_dict):
                 usage = bus_states[1:] - bus_states[:-1]
             df.loc[bus_index[i], "usage"] = usage
             df.loc[bus_index[i], "state"] = bus_states[:-1]
-            df.loc[bus_index[i], "mileage"] = bus_milage[-1]
+            df.loc[bus_index[i], "mileage"] = bus_milage[:-1]
         df_pool = pd.concat([df_pool, df], axis=0)
     os.makedirs(dirname + "/pkl/replication_data", exist_ok=True)
     df_pool.to_pickle(f"{dirname}/pkl/replication_data/rep_{groups}_{binsize}.pkl")
