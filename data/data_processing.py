@@ -32,7 +32,9 @@ def data_processing(init_dict):
         num_periods = df_raw.shape[1] - 12
         bus_index = df_raw["Bus_ID"].unique().astype(int)
         period_index = np.arange(num_periods)
-        index = pd.MultiIndex.from_product([bus_index, period_index])
+        index = pd.MultiIndex.from_product(
+            [bus_index, period_index], names=["Bus_ID", "period"]
+        )
         df = pd.DataFrame(index=index, columns=["state", "mileage", "usage"])
         df = df.assign(decision=0)
         for i, index in enumerate(df_raw.index):
@@ -79,4 +81,5 @@ def data_processing(init_dict):
         df_pool = pd.concat([df_pool, df], axis=0)
     os.makedirs(dirname + "/pkl/replication_data", exist_ok=True)
     df_pool.to_pickle(f"{dirname}/pkl/replication_data/rep_{groups}_{binsize}.pkl")
+
     return df_pool
