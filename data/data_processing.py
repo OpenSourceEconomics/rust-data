@@ -29,7 +29,7 @@ def data_processing(init_dict):
     idx = pd.IndexSlice
     for group in groups.split(","):
         df_raw = pd.read_pickle(f"{dirname}/pkl/group_data/{group}.pkl")
-        num_periods = df_raw.shape[1] - 12
+        num_periods = df_raw.shape[1] - 11
         bus_index = df_raw["Bus_ID"].unique().astype(int)
         period_index = np.arange(num_periods)
         index = pd.MultiIndex.from_product(
@@ -75,9 +75,9 @@ def data_processing(init_dict):
                 )
             else:
                 usage = bus_states[1:] - bus_states[:-1]
-            df.loc[bus_index[i], "usage"] = usage
-            df.loc[bus_index[i], "state"] = bus_states[:-1]
-            df.loc[bus_index[i], "mileage"] = bus_milage[:-1]
+            df.loc[bus_index[i], "usage"] = np.append(np.nan, usage)
+            df.loc[bus_index[i], "state"] = bus_states
+            df.loc[bus_index[i], "mileage"] = bus_milage
         df_pool = pd.concat([df_pool, df], axis=0)
     os.makedirs(dirname + "/pkl/replication_data", exist_ok=True)
     df_pool.to_pickle(f"{dirname}/pkl/replication_data/rep_{groups}_{binsize}.pkl")
