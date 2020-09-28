@@ -3,11 +3,10 @@ This module creates a pickle file which contains the total number of observation
 each group. Therefore every DataFrame row contains the bus identifier, the state
 variable and the according decision.
 """
-
-
-import pandas as pd
 import os
+
 import numpy as np
+import pandas as pd
 
 
 def data_processing(init_dict):
@@ -24,52 +23,63 @@ def data_processing(init_dict):
 
     """
     dirname = os.path.dirname(__file__)
-    df_end = pd.DataFrame()
     df_pool = pd.DataFrame()
-    for group in init_dict["groups"].split(","):
-        df = pd.read_pickle(dirname + "/pkl/group_data/" + group + ".pkl")
-        repl = pd.Series(index=df.index, data=0, dtype=int)
-        for j, i in enumerate(df.columns.values[11:]):
-            df2 = df[["Bus_ID", i]]
-            df2 = df2.assign(decision=0)
-            for l in [1, 2]:
-                df2.loc[repl == l, i] -= df.loc[repl == l, "Odo_" + str(l)]
-            for m in df2.index:
-                if i < df.columns.values[-1]:
-                    # Check if the bus has a first replacement if it has occurred
-                    if (
-                        (df.iloc[m][i + 1] > df.iloc[m]["Odo_1"])
-                        & (df.iloc[m]["Odo_1"] != 0)
-                        & (repl[m] == 0)
-                    ):
-                        df2.at[m, "decision"] = 1
-                        repl[m] = repl[m] + 1
-                    # Now check for the second
-                    elif (
-                        (df.iloc[m][i + 1] > df.iloc[m]["Odo_2"])
-                        & (df.iloc[m]["Odo_2"] != 0)
-                        & (repl[m] == 1)
-                    ):
-                        df2.at[m, "decision"] = 1
-                        repl[m] = repl[m] + 1
-            df2 = df2.rename(columns={i: "state"})
-            df_end = pd.concat([df_end, df2])
-
-        num_bus = len(df_end["Bus_ID"].unique())
-        num_periods = df_end.shape[0] / num_bus
-        df_end["period"] = np.arange(num_periods).repeat(num_bus).astype(int)
-        df_end[["state"]] = (df_end[["state"]] / init_dict["binsize"]).astype(int)
-        df_end.sort_values(["Bus_ID", "period"], inplace=True)
-        df_end.reset_index(drop=True, inplace=True)
-        df_pool = pd.concat([df_pool, df_end], axis=0)
-    df_pool.reset_index(drop=True, inplace=True)
+    groups = init_dict["groups"]
+    binsize = init_dict["binsize"]
+    idx = pd.IndexSlice
+    for group in groups.split(","):
+        df_raw = pd.read_pickle(f"{dirname}/pkl/group_data/{group}.pkl")
+        num_periods = df_raw.shape[1] - 11
+        bus_index = df_raw["Bus_ID"].unique().astype(int)
+        period_index = np.arange(num_periods)
+        index = pd.MultiIndex.from_product(
+            [bus_index, period_index], names=["Bus_ID", "period"]
+        )
+        df = pd.DataFrame(index=index, columns=["state", "mileage", "usage"])
+        df = df.assign(decision=0)
+        for i, index in enumerate(df_raw.index):
+            bus_row = df_raw.loc[index][11:].reset_index(drop=True)
+            repl_mil = [df_raw.loc[index, "Odo_1"], df_raw.loc[index, "Odo_2"]]
+            replacement_decisions = []
+            if repl_mil[0] > 0:
+                replacement_decisions += [np.max(bus_row[bus_row < repl_mil[0]].index)]
+                if repl_mil[1] > 0:
+                    bus_row[
+                        (repl_mil[0] < bus_row) & (bus_row < repl_mil[1])
+                    ] -= repl_mil[0]
+                    replacement_decisions += [
+                        np.max(bus_row[bus_row < repl_mil[1]].index)
+                    ]
+                    bus_row[bus_row > repl_mil[1]] -= repl_mil[1]
+                else:
+                    bus_row[repl_mil[0] < bus_row] -= repl_mil[0]
+            bus_milage = bus_row.values
+            bus_states = (bus_milage / binsize).astype(int)
+            usage = np.empty(0)
+            if len(replacement_decisions) > 0:
+                for decision_period in replacement_decisions:
+                    df.loc[idx[bus_index[i], decision_period], "decision"] = 1
+                for j, rep in enumerate(replacement_decisions):
+                    if j > 0:
+                        start = replacement_decisions[j - 1] + 1
+                    else:
+                        start = 0
+                    usage = np.append(
+                        usage, bus_states[start + 1 : rep + 1] - bus_states[start:rep]
+                    )
+                    usage = np.append(usage, np.ceil((bus_milage[rep + 1]) / binsize))
+                usage = np.append(
+                    usage,
+                    bus_states[replacement_decisions[-1] + 2 :]
+                    - bus_states[replacement_decisions[-1] + 1 : -1],
+                )
+            else:
+                usage = bus_states[1:] - bus_states[:-1]
+            df.loc[bus_index[i], "usage"] = np.append(np.nan, usage)
+            df.loc[bus_index[i], "state"] = bus_states
+            df.loc[bus_index[i], "mileage"] = bus_milage
+        df_pool = pd.concat([df_pool, df], axis=0)
     os.makedirs(dirname + "/pkl/replication_data", exist_ok=True)
-    df_pool.to_pickle(
-        dirname
-        + "/pkl/replication_data/rep_"
-        + init_dict["groups"]
-        + "_"
-        + str(init_dict["binsize"])
-        + ".pkl"
-    )
+    df_pool.to_pickle(f"{dirname}/pkl/replication_data/rep_{groups}_{binsize}.pkl")
+
     return df_pool
