@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 """Run project.
 
-This script simply runs all files in the repository to ensure all is working properly throughout.
+This script simply runs all files in the repository
+to ensure all is working properly throughout.
 
 """
-import subprocess as sp
-import glob
 import os
+import subprocess as sp
 
 PROJECT_ROOT = os.environ["PROJECT_DIR"]
 
 
 def run_notebook(notebook):
-    cmd = f" jupyter nbconvert --execute {notebook}  --ExecutePreprocessor.timeout=-1 --to html"
+    cmd = f" jupyter nbconvert --execute {notebook}
+    --ExecutePreprocessor.timeout=-1 --to html"
     sp.check_call(cmd, shell=True)
+
 
 # We want to make sure all notebooks run.
 os.chdir(PROJECT_ROOT)
