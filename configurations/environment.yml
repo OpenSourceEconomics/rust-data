@@ -16,7 +16,7 @@ dependencies:
   - numpydoc
   - pyaml
   - pytest-cov
-  - pytest-xdist    
+  - pytest-xdist
   - numpy
   - restructuredtext_lint
   - scipy>=1.2.1
