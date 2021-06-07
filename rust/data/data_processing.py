@@ -65,13 +65,13 @@ def data_processing(init_dict):
                     else:
                         start = 0
                     usage = np.append(
-                        usage, bus_states[start + 1 : rep + 1] - bus_states[start:rep]
+                        usage, bus_states[start + 1: rep + 1] - bus_states[start:rep]
                     )
                     usage = np.append(usage, np.ceil((bus_milage[rep + 1]) / binsize))
                 usage = np.append(
                     usage,
-                    bus_states[replacement_decisions[-1] + 2 :]
-                    - bus_states[replacement_decisions[-1] + 1 : -1],
+                    bus_states[replacement_decisions[-1] + 2:]
+                    - bus_states[replacement_decisions[-1] + 1: -1],
                 )
             else:
                 usage = bus_states[1:] - bus_states[:-1]

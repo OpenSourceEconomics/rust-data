@@ -30,6 +30,8 @@ dependencies:
   - markupsafe<2.0
   - pip:
       - git+https://github.com/OpenSourceEconomics/respy
+      - black-nb
+      - flake8-nb
       - apprise
       - pre-commit
       - pysftp
