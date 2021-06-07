@@ -30,4 +30,4 @@ jobs:
         export PATH="$PATH:/usr/share/miniconda/bin"
         source .envrc
         py.test        
-        run-project
+        python scripts/run_project.py
