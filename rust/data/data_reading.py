@@ -3,9 +3,9 @@ This module creates eight pickle files from the raw data files provided by John 
 Each file contains a pandas DataFrame indexed the same as in the documentation. The
 files are named according to their group in the paper.
 """
+import os
 
 import pandas as pd
-import os
 
 
 def data_reading():

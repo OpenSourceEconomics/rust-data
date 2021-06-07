@@ -5,7 +5,7 @@ on: [push]
 jobs:
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -15,6 +15,7 @@ jobs:
            environment-file: configurations/environment.yml
            python-version: 3.6
            auto-activate-base: false
+           
     - name: check notebook formatting
       shell: bash -l {0}
       run: |
@@ -22,7 +23,8 @@ jobs:
         source .envrc
         flake8-nb; [ $? -eq 0 ] || exit 1
         black-nb --check .; [ $? -eq 0 ] || exit 1
-   - name: run project
+        
+    - name: run project
       shell: bash -l {0}
       run: |
         export PATH="$PATH:/usr/share/miniconda/bin"
