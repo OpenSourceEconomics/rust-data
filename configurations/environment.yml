@@ -11,7 +11,6 @@ dependencies:
   - jupyterlab
   - matplotlib>=3.0.0
   - mkl
-  - nbsphinx=0.4.2
   - numba>=0.43.1
   - numpydoc
   - pyaml
@@ -42,3 +41,4 @@ dependencies:
       - sphinx-rtd-theme
       - sphinxcontrib-bibtex==1.0
       - sphinxcontrib-svg2pdfconverter[CairoSVG]
+      - nbsphinx
