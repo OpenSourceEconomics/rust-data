@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-def data_processing(init_dict, pickle = False):
+def data_processing(init_dict, pickle=False):
     """
     This function processes data from pickle files, which have the structure as
     explained in the documentation of Rust, to a pandas DataFrame saved in a pickle

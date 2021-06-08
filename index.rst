@@ -26,7 +26,7 @@
    :maxdepth: 1
 
    rust/replicate_descriptives.ipynb
-   
+
 You can find a link to Rust's documentation of the nested fixed point algorithm `here <https://editorialexpress.com/jrust/nfxp.pdf>`_.
 
 
