@@ -1,7 +1,6 @@
 """
-This module creates a pickle file which contains the total number of observations for
-each group. Therefore every DataFrame row contains the bus identifier, the state
-variable and the according decision.
+This module contains functions that read and process data from
+Rust's 1987 paper "Optimal Replacement of GMC Bus Engines".
 """
 import os
 
