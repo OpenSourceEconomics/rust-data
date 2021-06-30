@@ -21,8 +21,8 @@ jobs:
       run: |
         export PATH="$PATH:/usr/share/miniconda/bin"
         source .envrc
-        flake8-nb rust/replicate_descriptives.ipynb; [ $? -eq 0 ] || exit 1
-        black-nb --check rust/replicate_descriptives.ipynb; [ $? -eq 0 ] || exit 1
+        flake8-nb docs/replicate_descriptives.ipynb; [ $? -eq 0 ] || exit 1
+        black-nb --check docs/replicate_descriptives.ipynb; [ $? -eq 0 ] || exit 1
         
     - name: run project
       shell: bash -l {0}
