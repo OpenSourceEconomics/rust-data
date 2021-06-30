@@ -78,7 +78,7 @@ def data_processing(init_dict, pickle=False):
             df.loc[bus_index[i], "state"] = bus_states
             df.loc[bus_index[i], "mileage"] = bus_milage
         df_pool = pd.concat([df_pool, df], axis=0)
-    if pickle == True:
+    if pickle is True:
         os.makedirs(dirname + "/pkl/replication_data", exist_ok=True)
         df_pool.to_pickle(f"{dirname}/pkl/replication_data/rep_{groups}_{binsize}.pkl")
 
