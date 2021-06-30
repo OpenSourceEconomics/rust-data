@@ -18,6 +18,6 @@ def run_notebook(notebook):
 
 # We want to make sure all notebooks run.
 os.chdir(PROJECT_ROOT)
-os.chdir("rust")
+os.chdir("docs")
 run_notebook("replicate_descriptives.ipynb")
 os.chdir(PROJECT_ROOT)
