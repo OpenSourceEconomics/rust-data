@@ -1,7 +1,6 @@
 """
-This module creates a pickle file which contains the total number of observations for
-each group. Therefore every DataFrame row contains the bus identifier, the state
-variable and the according decision.
+This module contains functions that read and process data from
+Rust's 1987 paper "Optimal Replacement of GMC Bus Engines".
 """
 import os
 
@@ -9,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 
-def data_processing(init_dict):
+def data_processing(init_dict, pickle=False):
     """
     This function processes data from pickle files, which have the structure as
     explained in the documentation of Rust, to a pandas DataFrame saved in a pickle
@@ -79,7 +78,70 @@ def data_processing(init_dict):
             df.loc[bus_index[i], "state"] = bus_states
             df.loc[bus_index[i], "mileage"] = bus_milage
         df_pool = pd.concat([df_pool, df], axis=0)
-    os.makedirs(dirname + "/pkl/replication_data", exist_ok=True)
-    df_pool.to_pickle(f"{dirname}/pkl/replication_data/rep_{groups}_{binsize}.pkl")
+    if pickle is True:
+        os.makedirs(dirname + "/pkl/replication_data", exist_ok=True)
+        df_pool.to_pickle(f"{dirname}/pkl/replication_data/rep_{groups}_{binsize}.pkl")
 
     return df_pool
+
+
+def data_reading():
+    """
+    This function reads the raw data files and saves each bus group in a separate
+    pickle file. The structure of the raw data is documented in the readme file in
+    the subfolder original_data. The relevant information from this readme is stored in
+    the two dictionaries initialized in the function.
+
+    :return: Saves eight pickle files in pkl/group_data
+    """
+
+    dict_data = {
+        "g870": [36, 15, "group_1"],
+        "rt50": [60, 4, "group_2"],
+        "t8h203": [81, 48, "group_3"],
+        "a452372": [137, 18, "group_8"],
+        "a452374": [137, 10, "group_6"],
+        "a530872": [137, 18, "group_7"],
+        "a530874": [137, 12, "group_5"],
+        "a530875": [128, 37, "group_4"],
+    }
+    re_col = {
+        1: "Bus_ID",
+        2: "Month_pur",
+        3: "Year_pur",
+        4: "Month_1st",
+        5: "Year_1st",
+        6: "Odo_1",
+        7: "Month_2nd",
+        8: "Year_2nd",
+        9: "Odo_2",
+        10: "Month_begin",
+        11: "Year_begin",
+    }
+
+    dirname = os.path.dirname(__file__)
+    for keys in dict_data:
+        r, c = dict_data[keys][0], dict_data[keys][1]
+        file_cols = open(dirname + "/original_data/" + keys + ".asc").read().split("\n")
+        df = pd.DataFrame()
+        for j in range(0, c):
+            for k in range(j * r, (j + 1) * r):
+                df.loc[(k - j * r) + 1, j + 1] = float(file_cols[k])
+        df = df.transpose()
+        df.rename(columns=re_col, inplace=True)
+        df["Bus_ID"] = df["Bus_ID"].astype(int)
+        df.reset_index(inplace=True)
+        df.drop(df.columns[[0]], axis=1, inplace=True)
+        os.makedirs(dirname + "/pkl/group_data", exist_ok=True)
+        df.to_pickle(dirname + "/pkl/group_data/" + dict_data[keys][2] + ".pkl")
+
+
+def get_data_storage():
+    """
+    This function, gives back the absolute path of the folder data.
+    This path can then be used to import and read the original data provided by
+    John Rust.
+    :return: The absolute path of the folder data.
+    """
+    dirname = os.path.dirname(__file__)
+    return dirname
