@@ -15,8 +15,8 @@ sim_file.pkl
 .pytest_cache
 ruspy.egg-info
 build
+_build
 test.ruspy.yml
 figures
 ruspy.rst
 modules.rst
-
